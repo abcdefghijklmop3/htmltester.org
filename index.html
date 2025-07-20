@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My API-Powered Website</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        #items-list div {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to My Dynamic Website!</h1>
+    <button id="fetchItemsBtn">Fetch Items from API</button>
+    <div id="items-list">
+    </div>
+
+    <hr>
+
+    <h2>Add New Item</h2>
+    <input type="text" id="itemName" placeholder="Item Name">
+    <input type="text" id="itemDescription" placeholder="Item Description">
+    <button id="addItemBtn">Add Item</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fetchItemsBtn = document.getElementById('fetchItemsBtn');
+            const itemsListDiv = document.getElementById('items-list');
+            const itemNameInput = document.getElementById('itemName');
+            const itemDescriptionInput = document.getElementById('itemDescription');
+            const addItemBtn = document.getElementById('addItemBtn');
+
+            // IMPORTANT: Replace with your actual API URL when deployed
+            // For local development, it would be 'http://localhost:3000/api/items'
+            const apiUrl = 'http://localhost:3000/api/items';
+
+            // Function to fetch items and display them
+            async function fetchAndDisplayItems() {
+                try {
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    itemsListDiv.innerHTML = ''; // Clear previous items
+                    data.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.innerHTML = `
+                                <h3>${item.name} (ID: ${item.id})</h3>
+                                <p>${item.description}</p>
+                            `;
+                        itemsListDiv.appendChild(itemDiv);
+                    });
+                } catch (error) {
+                    console.error('Error fetching items:', error);
+                    itemsListDiv.innerHTML = '<p>Error loading items.</p>';
+                }
+            }
+
+            // Event listener for "Fetch Items" button
+            fetchItemsBtn.addEventListener('click', fetchAndDisplayItems);
+
+            // Event listener for "Add Item" button
+            addItemBtn.addEventListener('click', async () => {
+                const name = itemNameInput.value;
+                const description = itemDescriptionInput.value;
+
+                if (!name || !description) {
+                    alert('Please enter both name and description.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ name, description })
+                    });
+
+                    if (response.ok) {
+                        alert('Item added successfully!');
+                        itemNameInput.value = '';
+                        itemDescriptionInput.value = '';
+                        fetchAndDisplayItems(); // Refresh the list
+                    } else {
+                        const errorData = await response.text();
+                        alert(`Error adding item: ${errorData}`);
+                    }
+                } catch (error) {
+                    console.error('Error adding item:', error);
+                    alert('An error occurred while adding the item.');
+                }
+            });
+
+            // Fetch items when the page loads
+            fetchAndDisplayItems();
+        });
+    </script>
+</body>
+</html>
