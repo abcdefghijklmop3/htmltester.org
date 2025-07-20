@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>HTML Tester</title>
+<style>
+  :root {
+    --bg-color: #d0e7f9;
+    --text-color: #034078;
+    --border-color: #82a9d1;
+    --btn-bg: #82a9d1;
+    --btn-text: #034078;
+    --btn-hover-bg: #a0bce9;
+    --textarea-bg: #d0e7f9;
+    --iframe-bg: #e3f0ff;
+    --overlay-bg: rgba(208, 231, 249, 0.95);
+    --item-bg: #a7cdf2;
+    --preview-bg: black;
+  }
+
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  h1 {
+    margin: 0 0 10px 0;
+  }
+
+  textarea {
+    font-family: monospace;
+    font-size: 14px;
+    width: 100%;
+    height: 50%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--textarea-bg);
+    color: var(--text-color);
+    resize: none;
+    outline: none;
+  }
+
+  iframe#preview {
+    width: 100%;
+    height: 40%;
+    border: 1px solid var(--border-color);
+    background: var(--iframe-bg);
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+
+  #controls {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  button, select {
+    font-size: 14px;
+    padding: 6px 12px;
+    cursor: pointer;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    user-select: none;
+  }
+
+  button:hover, select:hover {
+    background: var(--btn-hover-bg);
+  }
+
+  #practiceBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+    font-weight: bold;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid var(--border-color);
+    user-select: none;
+  }
+
+  #fadeOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.5s ease;
+    z-index: 999;
+    display: flex; /* Added for centering content */
+    justify-content: center; /* Added for centering content */
+    align-items: center; /* Added for centering content */
+    flex-direction: column; /* Added for text + spinner */
+    color: var(--text-color); /* Inherit text color */
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  #loadsOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--overlay-bg);
+    display: none;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 998;
+  }
+
+  .loadItem {
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    margin: 10px;
+    padding: 8px;
+    width: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 12px;
+    box-sizing: border-box;
+  }
+
+  .loadItem iframe {
+    width: 150px;
+    height: 150px;
+    background: var(--preview-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .loadItem span {
+    margin-top: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    user-select: none;
+    word-break: break-word;
+  }
+
+  .loadButtons {
+    margin-top: 8px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .loadButtons button {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+
+  /* Close button inside loads overlay */
+  #loadsOverlay #closeLoadsBtn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    z-index: 1000;
+    user-select: none;
+  }
+  #loadsOverlay #closeLoadsBtn:hover {
+    background: var(--btn-hover-bg);
+  }
+
+  /* Practice mode minimal */
+  body.practiceMode {
+    background: white !important;
+    color: black !important;
+  }
+
+  body.practiceMode textarea {
+    background: white !important;
+    color: black !important;
+  }
+
+  body.practiceMode iframe#preview {
+    background: white !important;
+  }
+
+  body.practiceMode #loadsOverlay,
+  body.practiceMode #controls,
+  body.practiceMode #themeSelector,
+  body.practiceMode #practiceBtn,
+  body.practiceMode #showLoadsBtn {
+    display: none !important;
+  }
+
+  #focusBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1001;
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background: #eee;
+    color: #222;
+    user-select: none;
+    display: none;
+  }
+  #focusBtn.active {
+    display: block;
+  }
+
+  /* Practice mode Run button - bottom left, same style as others */
+  #practiceRunBtn {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    z-index: 1003;
+    display: none;
+  }
+  body.practiceMode #practiceRunBtn {
+    display: inline-block;
+  }
+
+  /* Practice mode Fullscreen Preview button - bottom right */
+  #practiceFullscreenBtn {
+    display: none;
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1004;
+    padding: 8px 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    cursor: pointer;
+    user-select: none;
+  }
+  body.practiceMode #practiceFullscreenBtn {
+    display: inline-block !important;
+  }
+
+  /* New Error Message Container Styling */
+  #errorMessageContainer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffe0e0; /* Light red background */
+    color: #a00000; /* Dark red text */
+    border: 2px solid #ff0000; /* Red border */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1005; /* Above other overlays */
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    gap: 10px;
+    max-width: 90%;
+    box-sizing: border-box;
+    font-family: sans-serif; /* Changed from monospace for general readability */
+    white-space: pre-wrap; /* Preserve line breaks */
+    word-break: break-word; /* Break long words */
+  }
+
+  #errorMessageContainer button {
+    background: #ff6666;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  #errorMessageContainer button:hover {
+    background: #ff3333;
+  }
+
+  #errorMessageText {
+    max-height: 200px; /* Limit height for long errors */
+    overflow-y: auto; /* Add scroll if content exceeds max-height */
+    padding-right: 5px; /* Space for scrollbar */
+    font-family: monospace; /* Keep for the actual error message to preserve formatting */
+  }
+
+  #liveStatus {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333; /* Default status text color */
+    flex-wrap: wrap; /* Allow status items to wrap */
+    gap: 5px 10px; /* Gap between items */
+  }
+
+  #statusColor {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin-right: 8px;
+    background-color: gray; /* Default neutral */
+    border: 1px solid rgba(0,0,0,0.2);
+    flex-shrink: 0; /* Prevent shrinking */
+  }
+  #statusColor.green { background-color: #4CAF50; } /* Green for OK */
+  #statusColor.orange { background-color: #ff9800; } /* Orange for Warning/Overload */
+  #statusColor.red { background-color: #f44336; } /* Red for critical errors */
+
+  /* Spinner for loading */
+  .spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: var(--btn-bg); /* Use theme color for spinner */
+    animation: spin 1s ease infinite;
+    margin-top: 15px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+</style>
+</head>
+<body>
+
+<button id="practiceBtn">Practice Mode</button>
+<button id="focusBtn">Focus</button>
+<div id="fadeOverlay">
+    <span id="loadingMessage"></span>
+    <div class="spinner" id="loadingSpinner"></div>
+</div>
+
+<div id="loadsOverlay">
+  <button id="closeLoadsBtn">Close</button>
+</div>
+
+<div id="errorMessageContainer">
+  <div id="liveStatus">
+    <span id="statusColor"></span>
+    <span id="statusText"></span>
+    <span id="downtimeDuration" style="font-weight: normal; font-size: 0.9em; color: #555;"></span>
+    <span id="downtimeCount" style="font-weight: normal; font-size: 0.9em; color: #555;"></span>
+  </div>
+  <div id="userFriendlyErrorMessage"></div>
+  <div id="errorMessageText"></div> <div style="display: flex; justify-content: space-around; gap: 10px;">
+    <button id="copyErrorBtn">Copy Details</button>
+    <button id="closeErrorBtn">Close</button>
+  </div>
+</div>
+
+<h1>HTML Tester with Themes, Practice & Loads</h1>
+
+<textarea id="htmlInput" placeholder="Paste your HTML code here"></textarea>
+
+<button id="practiceRunBtn">Run</button>
+<button id="practiceFullscreenBtn">Fullscreen Preview</button>
+
+<iframe id="preview"></iframe>
+
+<div id="controls">
+  <button id="runCodeBtn">Run</button>
+  <button id="fullscreenPreviewBtn">Fullscreen Preview</button>
+  <button id="aiCoderBtn">AI Coder</button>
+  <button id="saveLoadBtn">Save Load</button>
+  <button id="showLoadsBtn">Show Loads</button>
+  <select id="themeSelector">
+    <option value="Ocean Blue">Ocean Blue</option>
+    <option value="Midnight Purple">Midnight Purple</option>
+    <option value="Forest Green">Forest Green</option>
+    <option value="Sunset Orange">Sunset Orange</option>
+    <option value="Cloud Gray">Cloud Gray</option>
+    <option value="Rose Pink">Rose Pink</option>
+    <option value="Lemon Yellow">Lemon Yellow</option>
+    <option value="Light">Light</option>
+    <option value="Dark">Dark</option>
+  </select>
+</div>
+
+<script type="module">
+// Import the Google Generative AI SDK
+import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+// YOUR GEMINI API KEY HAS BEEN PLACED HERE
+const GEMINI_API_KEY = 'AIzaSyDL49tKDZ-7561TVgbRKbqieGLy63EYDHE'; 
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+// Get references to all elements
+const textarea = document.getElementById('htmlInput');
+const iframe = document.getElementById('preview');
+const fadeOverlay = document.getElementById('fadeOverlay');
+const loadsOverlay = document.getElementById('loadsOverlay');
+const themeSelector = document.getElementById('themeSelector');
+
+// Error message elements
+const errorMessageContainer = document.getElementById('errorMessageContainer');
+const userFriendlyErrorMessage = document.getElementById('userFriendlyErrorMessage'); // New element
+const errorMessageText = document.getElementById('errorMessageText'); // Full technical error
+const copyErrorBtn = document.getElementById('copyErrorBtn');
+const closeErrorBtn = document.getElementById('closeErrorBtn');
+
+// Live Status elements
+const statusColor = document.getElementById('statusColor');
+const statusText = document.getElementById('statusText');
+const downtimeDuration = document.getElementById('downtimeDuration'); // New
+const downtimeCount = document.getElementById('downtimeCount');     // New
+
+// Loading indicator elements
+const loadingMessage = document.getElementById('loadingMessage');
+const loadingSpinner = document.getElementById('loadingSpinner');
+
+// Buttons (now using event listeners)
+const practiceBtn = document.getElementById('practiceBtn');
+const focusBtn = document.getElementById('focusBtn');
+const closeLoadsBtn = document.getElementById('closeLoadsBtn'); // In loads overlay
+const runCodeBtn = document.getElementById('runCodeBtn'); // In controls
+const fullscreenPreviewBtn = document.getElementById('fullscreenPreviewBtn'); // In controls
+const aiCoderBtn = document.getElementById('aiCoderBtn');
+const saveLoadBtn = document.getElementById('saveLoadBtn');
+const showLoadsBtn = document.getElementById('showLoadsBtn');
+const practiceRunBtn = document.getElementById('practiceRunBtn');
+const practiceFullscreenBtn = document.getElementById('practiceFullscreenBtn');
+
+
+const themes = {
+  "Ocean Blue": {bg:"#d0e7f9",text:"#034078",border:"#82a9d1",btn:"#82a9d1",btnText:"#034078",hover:"#a0bce9",overlay:"rgba(208,231,249,0.95)",item:"#a7cdf2",previewBg:"black"},
+  "Midnight Purple": {bg:"#2e003e",text:"#ffffff",border:"#660066",btn:"#660066",btnText:"#ffffff",hover:"#800080",overlay:"rgba(46,0,62,0.95)",item:"#5a005a",previewBg:"black"},
+  "Forest Green": {bg:"#e6f4ea",text:"#0b3d02",border:"#2d6a4f",btn:"#2d6a4f",btnText:"#ffffff",hover:"#40916c",overlay:"rgba(230,244,234,0.95)",item:"#95d5b2",previewBg:"black"},
+  "Sunset Orange": {bg:"#fff4e6",text:"#7f2a00",border:"#ff6d00",btn:"#ff6d00",btnText:"#ffffff",hover:"#ff8800",overlay:"rgba(255,244,230,0.95)",item:"#ffd6a5",previewBg:"black"},
+  "Cloud Gray": {bg:"#f0f0f0",text:"#333333",border:"#999999",btn:"#999999",btnText:"#ffffff",hover:"#bfbfbf",overlay:"rgba(240,240,240,0.95)",item:"#d9d9d9",previewBg:"black"},
+  "Rose Pink": {bg:"#fff0f5",text:"#660033",border:"#cc3366",btn:"#cc3366",btnText:"#ffffff",hover:"#ff6699",overlay:"rgba(255,240,245,0.95)",item:"#ffb6c1",previewBg:"black"},
+  "Lemon Yellow": {bg:"#ffffe0",text:"#666600",border:"#cccc00",btn:"#cccc00",btnText:"#000000",hover:"#ffff33",overlay:"rgba(255,255,224,0.95)",item:"#ffff99",previewBg:"black"},
+  "Light": {bg:"#ffffff",text:"#000000",border:"#cccccc",btn:"#cccccc",btnText:"#000000",hover:"#e6e6e6",overlay:"rgba(255,255,255,0.95)",item:"#f2f2f2",previewBg:"white"},
+  "Dark": {bg:"#1e1e1e",text:"#ffffff",border:"#444444",btn:"#444444",btnText:"#ffffff",hover:"#555555",overlay:"rgba(30,30,30,0.95)",item:"#2c2c2c",previewBg:"black"}
+};
+
+function applyTheme(name) {
+  const t = themes[name];
+  document.documentElement.style.setProperty('--bg-color', t.bg);
+  document.documentElement.style.setProperty('--text-color', t.text);
+  document.documentElement.style.setProperty('--border-color', t.border);
+  document.documentElement.style.setProperty('--btn-bg', t.btn);
+  document.documentElement.style.setProperty('--btn-text', t.btnText);
+  document.documentElement.style.setProperty('--btn-hover-bg', t.hover);
+  document.documentElement.style.setProperty('--textarea-bg', t.bg);
+  document.documentElement.style.setProperty('--iframe-bg', t.bg);
+  document.documentElement.style.setProperty('--overlay-bg', t.overlay);
+  document.documentElement.style.setProperty('--item-bg', t.item);
+  document.documentElement.style.setProperty('--preview-bg', t.previewBg); // Apply theme's preview background
+  themeSelector.value = name;
+}
+
+function runCode() {
+  iframe.srcdoc = textarea.value;
+}
+
+function enterFullscreen() {
+  if (iframe.requestFullscreen) {
+    iframe.requestFullscreen();
+  } else if (iframe.mozRequestFullScreen) { /* Firefox */
+    iframe.mozRequestFullScreen();
+  } else if (iframe.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+    iframe.webkitRequestFullscreen();
+  } else if (iframe.msRequestFullscreen) { /* IE/Edge */
+    iframe.msRequestFullscreen();
+  }
+}
+
+// --- API Error Tracking Functions ---
+const API_ERROR_KEY = 'geminiApiErrors'; // Key for all API errors
+
+function recordApiErrorEvent() {
+    let events = JSON.parse(localStorage.getItem(API_ERROR_KEY) || '[]');
+    const now = Date.now();
+    
+    // Clean up old events (keep only last 24 hours for "today's count")
+    const oneDayAgo = now - (24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    events = events.filter(timestamp => timestamp > oneDayAgo);
+
+    events.push(now);
+    localStorage.setItem(API_ERROR_KEY, JSON.stringify(events));
+}
+
+function getApiErrorStats() {
+    const events = JSON.parse(localStorage.getItem(API_ERROR_KEY) || '[]');
+    const now = Date.now();
+
+    let lastErrorDuration = 'N/A';
+    if (events.length > 0) {
+        const lastEventTime = events[events.length - 1];
+        const durationMs = now - lastEventTime;
+
+        if (durationMs < 1000) { // If less than 1 second, show "just now"
+            lastErrorDuration = "just now";
+        } else {
+            const seconds = Math.floor(durationMs / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            if (hours > 0) lastErrorDuration = `${hours}h ${minutes % 60}m ago`;
+            else if (minutes > 0) lastErrorDuration = `${minutes}m ${seconds % 60}s ago`;
+            else lastErrorDuration = `${seconds}s ago`;
+        }
+    }
+
+    // Count occurrences today (since midnight local time)
+    const today = new Date(); 
+    today.setHours(0, 0, 0, 0); // Set to midnight for comparison
+    const todayStartTimestamp = today.getTime();
+
+    const todayOccurrences = events.filter(timestamp => timestamp >= todayStartTimestamp).length;
+
+    return { lastErrorDuration, todayOccurrences };
+}
+// --- End API Error Tracking Functions ---
+
+
+async function askAICoder() {
+  const promptText = prompt('What would you like to code today in HTML? (e.g., "A simple responsive navigation bar with three links")');
+
+  if (!promptText) return; // User cancelled the prompt
+
+  // Show loading indicator
+  loadingMessage.textContent = "Generating code... Please wait.";
+  loadingSpinner.style.display = 'block'; // Show spinner
+  fadeOverlay.style.opacity = '1';
+  fadeOverlay.style.pointerEvents = 'auto'; // Make it clickable to prevent interaction
+
+  // Hide any previous error messages
+  errorMessageContainer.style.display = 'none';
+  downtimeDuration.textContent = ''; // Clear previous downtime info
+  downtimeCount.textContent = '';     // Clear previous downtime info
+
+
+  try {
+    // Changed model to gemini-2.0-flash as per the previous troubleshooting
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }); 
+
+    // Refined prompt to avoid markdown wrappers and request specific body styling for no scrollbar
+    const result = await model.generateContent(`Generate a complete, self-contained HTML document (including <html>, <head>, and <body> tags) based on the following request: "${promptText}". Ensure all CSS is embedded within <style> tags in the <head>, and all JavaScript is embedded within <script> tags at the end of the <body>. Inside the <style> tag, ensure the body has 'margin: 0; padding: 0; overflow: hidden;' to prevent scrollbars. Do not include any external file references. Provide ONLY the HTML code, do NOT wrap the HTML in markdown code blocks (e.g., \`\`\`html...\`\`\`) and do NOT include any additional text or explanations outside the HTML document itself.`);
+    
+    const response = await result.response;
+    let text = response.text();
+
+    // Aggressive cleaning to remove any remaining markdown code block wrappers
+    text = text.replace(/^```html\s*/, '').replace(/\s*```$/, '');
+    text = text.trim(); // Trim any leading/trailing whitespace
+
+    textarea.value = text;
+    runCode(); // Automatically run the generated code
+  } catch (error) {
+    console.error("Error generating code:", error); // Still log to console for detailed debugging
+    
+    // Default values if no specific error is matched
+    let status = "Problem Detected"; // Start with a generic "Problem"
+    let statusColorClass = "red"; // Assume critical until proven otherwise
+    let userMessage = "An unexpected error occurred. Please try again or check your API key.";
+    let technicalDetails = `Error Type: ${error.name || 'Unknown'}\nMessage: ${error.message || 'No specific message'}`;
+    
+    let apiErrorOccurred = false; // Flag to check if any API error was handled
+
+    if (error.response) {
+        technicalDetails += `\nStatus: ${error.response.status}`;
+        technicalDetails += `\nStatus Text: ${error.response.statusText}`;
+        
+        try {
+            const errorBody = await error.response.json();
+            if (errorBody && errorBody.error && errorBody.error.message) {
+                technicalDetails += `\nAPI Error: ${errorBody.error.message}`;
+                apiErrorOccurred = true; // An API error was detected
+
+                // --- Specific Error Handling Logic (ordered by commonality/severity) ---
+                if (errorBody.error.code === 503 || errorBody.error.message.includes("The model is overloaded") || errorBody.error.message.includes("RESOURCE_EXHAUSTED")) {
+                    userMessage = "Sorry, Gemini AI is at high traffic. Please try again later.";
+                    status = "High Traffic";
+                    statusColorClass = "orange"; // Orange for temporary issues
+                }
+                else if (errorBody.error.message.includes("API key not valid") || errorBody.error.code === 401) {
+                    userMessage = "API Key Invalid: Your Gemini API key is not valid. Please check it on Google AI Studio.";
+                    status = "Key Error";
+                    statusColorClass = "red"; 
+                } else if (errorBody.error.message.includes("PERMISSION_DENIED")) {
+                    userMessage = "Permission Denied: Your API key might not have the necessary permissions or is restricted.";
+                    status = "Permission Denied";
+                    statusColorClass = "red";
+                } else if (errorBody.error.message.includes("not found for API version") || errorBody.error.code === 404) {
+                    userMessage = "Model Not Found/Supported: The AI model requested is not available or supported for this API version. (Currently using 'gemini-2.0-flash').";
+                    status = "Model Error";
+                    statusColorClass = "red";
+                }
+                // --- End Specific Error Handling ---
+                else {
+                    // Generic API error caught if none of the above specific ones match
+                    userMessage = `API Error: ${errorBody.error.message}`;
+                    status = "API Error";
+                    statusColorClass = "red";
+                }
+            } else if (errorBody && errorBody.error) {
+                 // Fallback for an error object without a specific 'message'
+                 technicalDetails += `\nAPI Error Object: ${JSON.stringify(errorBody.error, null, 2)}`;
+                 userMessage = `API Error: ${errorBody.error.message || JSON.stringify(errorBody.error)}`;
+                 status = "API Error";
+                 statusColorClass = "red";
+                 apiErrorOccurred = true;
+            }
+        } catch (jsonError) {
+            technicalDetails += `\n(Could not parse API response body as JSON: ${jsonError.message})`;
+            userMessage = `API Error (Status ${error.response.status}): Could not get full details. Check browser console.`;
+            status = "API Error";
+            statusColorClass = "red";
+            apiErrorOccurred = true;
+        }
+    } else if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+        userMessage = "Network Error: Could not connect to the Gemini API. Check your internet connection or firewall settings.";
+        technicalDetails = `Network Error: ${error.message}. This might be due to internet connectivity, firewall, or CORS issues.`;
+        status = "Network Error";
+        statusColorClass = "red";
+        apiErrorOccurred = true; // Treat network issues as API interaction problems
+    } else if (error.message.includes("GoogleGenerativeAI is not a constructor")) {
+        userMessage = "Initialization Error: The Gemini API library might not have loaded correctly. Check your internet connection and the script import URL.";
+        technicalDetails = `Initialization Error: ${error.message}. This suggests an issue with the 'import { GoogleGenerativeAI }' statement.`;
+        status = "Initialization Error";
+        statusColorClass = "red";
+    }
+    // If no specific error was caught, it will retain the initial "Problem Detected" status.
+
+    // Record the event and get updated stats IF an API error was detected, or if it's explicitly a red/orange status
+    let apiStats = { lastErrorDuration: 'N/A', todayOccurrences: 0 };
+    if (apiErrorOccurred || statusColorClass === "red" || statusColorClass === "orange") { 
+        recordApiErrorEvent();
+        apiStats = getApiErrorStats();
+    }
+
+
+    // Set Live Status
+    statusText.textContent = `Status: ${status}`;
+    statusColor.className = `statusColor ${statusColorClass}`; // Apply class for color
+    
+    // Display API error stats if there was an API-related issue
+    if (apiStats.todayOccurrences > 0) { // Only show if at least one error occurred
+        downtimeDuration.textContent = ` (Last issue: ${apiStats.lastErrorDuration})`;
+        downtimeCount.textContent = ` (Today: ${apiStats.todayOccurrences} times)`;
+    } else {
+        downtimeDuration.textContent = ''; // Ensure cleared for non-API error types
+        downtimeCount.textContent = '';     // Ensure cleared for non-API error types
+    }
+
+    // Display messages in the error box
+    userFriendlyErrorMessage.textContent = userMessage;
+    errorMessageText.textContent = technicalDetails; // Keep full technical details in the monospace box
+    errorMessageContainer.style.display = 'flex'; // Show the error box
+
+  } finally {
+    // Hide loading indicator
+    fadeOverlay.style.opacity = '0';
+    fadeOverlay.style.pointerEvents = 'none';
+    loadingMessage.textContent = ""; // Clear message
+    loadingSpinner.style.display = 'none'; // Hide spinner
+  }
+}
+
+function saveLoad() {
+  let loads = JSON.parse(localStorage.getItem('htmlTesterLoads') || '[]');
+  if (loads.length >= 10) { alert('Max 10 loads. Delete one before adding.'); return; }
+  const name = prompt('Name this load:');
+  if (!name) return;
+  loads.push({ name: name, code: textarea.value });
+  localStorage.setItem('htmlTesterLoads', JSON.stringify(loads));
+  alert(`Saved "${name}".`);
+}
+
+function toggleLoadsOverlay() {
+  if (loadsOverlay.style.display === 'flex') {
+    loadsOverlay.style.display = 'none';
+    showLoadsBtn.textContent = 'Show Loads';
+  } else {
+    loadsOverlay.style.display = 'flex';
+    renderLoads();
+    showLoadsBtn.textContent = 'Hide Loads';
+  }
+}
+
+function renderLoads() {
+  loadsOverlay.innerHTML = '';
+  const closeBtn = document.createElement('button');
+  closeBtn.id = 'closeLoadsBtn';
+  closeBtn.textContent = 'Close';
+  // Attach event listener instead of inline onclick
+  closeBtn.addEventListener('click', toggleLoadsOverlay); 
+  loadsOverlay.appendChild(closeBtn);
+
+  const loads = JSON.parse(localStorage.getItem('htmlTesterLoads') || '[]');
+  if (loads.length === 0) {
+    const msg = document.createElement('div');
+    msg.textContent = 'No loads saved yet.';
+    msg.style.fontSize = '20px';
+    msg.style.marginTop = '60px'; // Give space for close button
+    loadsOverlay.appendChild(msg);
+    return;
+  }
+  loads.forEach((load, idx) => {
+    const item = document.createElement('div');
+    item.className = 'loadItem';
+
+    // Scale the content for a smaller preview
+    const zoomedCode = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=0.5">
+          <title>Preview</title>
+          <style>
+              body,html {margin:0; padding:0; overflow:hidden; box-sizing: border-box;}
+              #scaled-content {
+                  transform: scale(0.5); 
+                  transform-origin: top left; 
+                  width: 200%; /* Double the width to counteract scale */
+                  height: 200%; /* Double the height to counteract scale */
+                  box-sizing: border-box;
+                  background: var(--preview-bg); /* Use theme's preview background */
+              }
+          </style>
+      </head>
+      <body>
+          <div id="scaled-content">
+              ${load.code}
+          </div>
+      </body>
+      </html>
+    `;
+
+    const preview = document.createElement('iframe');
+    preview.srcdoc = zoomedCode;
+
+    const name = document.createElement('span');
+    name.textContent = load.name;
+
+    const buttonsDiv = document.createElement('div');
+    buttonsDiv.className = 'loadButtons';
+
+    const loadBtn = document.createElement('button');
+    loadBtn.textContent = 'Load';
+    loadBtn.addEventListener('click', () => {
+      textarea.value = load.code;
+      runCode();
+      toggleLoadsOverlay();
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', () => {
+      if (confirm(`Delete "${load.name}"?`)) { // Using confirm for simplicity here
+        let loads = JSON.parse(localStorage.getItem('htmlTesterLoads') || '[]');
+        loads.splice(idx, 1);
+        localStorage.setItem('htmlTesterLoads', JSON.stringify(loads));
+        renderLoads();
+      }
+    });
+
+    buttonsDiv.appendChild(loadBtn);
+    buttonsDiv.appendChild(delBtn);
+
+    item.appendChild(preview);
+    item.appendChild(name);
+    item.appendChild(buttonsDiv);
+
+    loadsOverlay.appendChild(item);
+  });
+}
+
+function setTheme(name) {
+  applyTheme(name);
+  localStorage.setItem('htmlTesterTheme', name);
+}
+
+let isPracticeMode = false;
+function togglePracticeMode() {
+  isPracticeMode = !isPracticeMode;
+  if (isPracticeMode) {
+    fadeOverlay.style.opacity = '1';
+    loadingMessage.textContent = ""; // Clear loading message
+    loadingSpinner.style.display = 'none'; // Hide spinner
+    setTimeout(() => {
+      document.body.classList.add('practiceMode');
+      textarea.value = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Practice Coding</title>
+<style>
+  body {
+    font-family: sans-serif; 
+    background: #fff; 
+    color: #000; 
+    margin: 0; 
+    padding: 20px;
+    overflow: hidden; /* Ensure no scrollbars in practice mode preview */
+  }
+</style>
+</head>
+<body>
+<h1>My Practice Page</h1>
+<p>Start adding your HTML and CSS here to practice.</p>
+</body>
+</html>`;
+      runCode();
+      fadeOverlay.style.opacity = '0';
+
+      // Hide/show elements for practice mode
+      themeSelector.style.display = 'none';
+      showLoadsBtn.style.display = 'none';
+      practiceBtn.style.display = 'none'; // Hide itself
+      loadsOverlay.style.display = 'none';
+      focusBtn.classList.add('active'); // Focus button active in practice
+      practiceRunBtn.style.display = 'inline-block';
+      practiceFullscreenBtn.style.display = 'inline-block'; // Ensure practice fullscreen button is visible
+
+    }, 1500); // Duration of fade-out
+  } else {
+    fadeOverlay.style.opacity = '1';
+    loadingMessage.textContent = ""; // Clear loading message
+    loadingSpinner.style.display = 'none'; // Hide spinner
+    setTimeout(() => {
+      document.body.classList.remove('practiceMode');
+      fadeOverlay.style.opacity = '0';
+
+      // Restore elements for normal mode
+      themeSelector.style.display = '';
+      showLoadsBtn.style.display = '';
+      practiceBtn.style.display = '';
+      loadsOverlay.style.display = 'none'; // Ensure loads overlay is hidden
+      focusBtn.classList.remove('active');
+      practiceRunBtn.style.display = 'none';
+      practiceFullscreenBtn.style.display = 'none';
+      
+      // If was in focus mode, exit it
+      if (document.body.classList.contains('focusMode')) {
+        toggleFocusMode(true); // forceOff
+      }
+
+    }, 1500); // Duration of fade-out
+  }
+}
+
+
+let focusActive = false;
+function toggleFocusMode(forceOff = false) {
+  if (forceOff) focusActive = false;
+  else focusActive = !focusActive;
+
+  if (focusActive) {
+    fadeOverlay.style.opacity = '1';
+    loadingMessage.textContent = ""; // Clear loading message
+    loadingSpinner.style.display = 'none'; // Hide spinner
+    setTimeout(() => {
+      document.body.classList.add('focusMode');
+      textarea.style.position = 'fixed';
+      textarea.style.top = '50%';
+      textarea.style.left = '50%';
+      textarea.style.transform = 'translate(-50%, -50%)';
+      textarea.style.width = '90vw';
+      textarea.style.height = '80vh';
+      textarea.style.zIndex = '1002';
+
+      iframe.style.position = 'fixed';
+      iframe.style.top = 'calc(50% + 45vh)'; /* Adjusted to place below textarea if needed */
+      iframe.style.left = '50%';
+      iframe.style.transform = 'translate(-50%, 0)';
+      iframe.style.width = '90vw';
+      iframe.style.height = '40vh'; /* Smaller height for preview */
+      iframe.style.zIndex = '1002';
+
+      loadsOverlay.style.display = 'none';
+      focusBtn.textContent = 'Exit Focus';
+      // Hide other buttons when in focus mode
+      runCodeBtn.style.display = 'none';
+      fullscreenPreviewBtn.style.display = 'none';
+      aiCoderBtn.style.display = 'none';
+      saveLoadBtn.style.display = 'none';
+      showLoadsBtn.style.display = 'none';
+      themeSelector.style.display = 'none';
+      practiceBtn.style.display = 'none';
+
+      fadeOverlay.style.opacity = '0';
+      fadeOverlay.style.pointerEvents = 'none';
+    }, 1500);
+  } else {
+    fadeOverlay.style.opacity = '1';
+    loadingMessage.textContent = ""; // Clear loading message
+    loadingSpinner.style.display = 'none'; // Hide spinner
+    setTimeout(() => {
+      document.body.classList.remove('focusMode');
+      textarea.style.position = '';
+      textarea.style.top = '';
+      textarea.style.left = '';
+      textarea.style.transform = '';
+      textarea.style.width = '';
+      textarea.style.height = '';
+      textarea.style.zIndex = '';
+
+      iframe.style.position = '';
+      iframe.style.top = '';
+      iframe.style.left = '';
+      iframe.style.transform = '';
+      iframe.style.width = '';
+      iframe.style.height = '';
+      iframe.style.zIndex = '';
+
+      fadeOverlay.style.opacity = '0';
+      fadeOverlay.style.pointerEvents = 'none';
+
+      focusBtn.textContent = 'Focus';
+      // Restore button visibility based on whether it's practice mode or not
+      if (!isPracticeMode) {
+        runCodeBtn.style.display = '';
+        fullscreenPreviewBtn.style.display = '';
+        aiCoderBtn.style.display = '';
+        saveLoadBtn.style.display = '';
+        showLoadsBtn.style.display = '';
+        themeSelector.style.display = '';
+        practiceBtn.style.display = '';
+      }
+      // Practice mode buttons are handled by togglePracticeMode's class logic
+      practiceRunBtn.style.display = isPracticeMode ? 'inline-block' : 'none';
+      practiceFullscreenBtn.style.display = isPracticeMode ? 'inline-block' : 'none';
+    }, 1500);
+  }
+}
+
+// Function to copy error text to clipboard
+function copyErrorToClipboard() {
+    // Combine user-friendly message and technical details for copying
+    let textToCopy = `Status: ${statusText.textContent}\nUser Message: ${userFriendlyErrorMessage.textContent}`;
+    
+    // Add downtime stats if they are visible
+    if (downtimeDuration.textContent) {
+        textToCopy += `\n${downtimeDuration.textContent}`;
+    }
+    if (downtimeCount.textContent) {
+        textToCopy += `\n${downtimeCount.textContent}`;
+    }
+
+    textToCopy += `\n\nTechnical Details:\n${errorMessageText.textContent}`;
+
+    const tempTextArea = document.createElement('textarea');
+    tempTextArea.value = textToCopy;
+    document.body.appendChild(tempTextArea);
+    tempTextArea.select();
+    try {
+        document.execCommand('copy');
+        alert('Error details copied to clipboard!');
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+        alert('Failed to copy error details. Please copy manually from the box.');
+    }
+    document.body.removeChild(tempTextArea);
+    closeErrorMessage(); // Close after copying
+}
+
+// Function to close the error message container
+function closeErrorMessage() {
+    errorMessageContainer.style.display = 'none';
+    userFriendlyErrorMessage.textContent = ''; 
+    errorMessageText.textContent = ''; 
+    statusText.textContent = '';
+    statusColor.className = 'statusColor'; // Reset color
+    downtimeDuration.textContent = ''; // Clear new elements
+    downtimeCount.textContent = '';     // Clear new elements
+}
+
+
+// Add all event listeners here, once the DOM is loaded
+window.addEventListener('DOMContentLoaded', () => {
+  // Add Event Listeners for all buttons
+  practiceBtn.addEventListener('click', togglePracticeMode);
+  focusBtn.addEventListener('click', toggleFocusMode);
+  closeLoadsBtn.addEventListener('click', toggleLoadsOverlay);
+  runCodeBtn.addEventListener('click', runCode);
+  fullscreenPreviewBtn.addEventListener('click', enterFullscreen);
+  aiCoderBtn.addEventListener('click', askAICoder);
+  saveLoadBtn.addEventListener('click', saveLoad);
+  showLoadsBtn.addEventListener('click', toggleLoadsOverlay);
+  themeSelector.addEventListener('change', (event) => setTheme(event.target.value));
+  practiceRunBtn.addEventListener('click', runCode);
+  practiceFullscreenBtn.addEventListener('click', enterFullscreen);
+
+  // Event listeners for the new error message box
+  copyErrorBtn.addEventListener('click', copyErrorToClipboard);
+  closeErrorBtn.addEventListener('click', closeErrorMessage);
+
+  // Initial setup on load
+  const savedTheme = localStorage.getItem('htmlTesterTheme') || 'Ocean Blue';
+  applyTheme(savedTheme);
+  runCode();
+});
+</script>
+
+</body>
+</html>
